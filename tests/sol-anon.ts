@@ -11,55 +11,44 @@ describe("sol-anon", () => {
 
   const owner = anchor.web3.Keypair.generate();
 
-
   const [inbox] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("inbox")], program.programId
   );
 
-  it("Deploys program", async () => {
-      console.log(program.programId);
-      let p = await program.provider.connection.getAccountInfo(program.programId);
-      console.log(p);
-  });
-
   it("Initializes an inbox", async () => {
 
       let token_airdrop = await provider.connection.requestAirdrop(owner.publicKey, 1000000000);
-      console.log(token_airdrop);
-
-      let p = await program.provider.connection.getAccountInfo(program.programId);
-      console.log(p);
+      await provider.connection.confirmTransaction(token_airdrop);
 
       await program
           .methods
           .initialize()
-          .accounts({
-              inbox: inbox,
-              admin: owner.publicKey,
-              systemProgram: anchor.web3.SystemProgram.programId,
-          })
+          .accountsPartial({admin: owner.publicKey})
           .signers([owner])
           .rpc();
 
-      let inboxAccount = await program.account.inbox.fetch(inbox);
-      console.log(inboxAccount);
+        let inboxAccount = await program.account.inbox.fetch(inbox);
+        console.log("INBOX INIT", inboxAccount.admin.toString());
+        expect(inboxAccount.admin.toString() === owner.publicKey.toString());
   });
 
   it("Changes owner", async () => {
     const newOwner = anchor.web3.Keypair.generate();
 
-    await program
+    let sig = await program
         .methods
         .changeAdmin(newOwner.publicKey)
         .accounts({
-          inbox: inbox,
-          admin: owner.publicKey,
+            inbox: inbox,
+            admin: owner.publicKey
         })
         .signers([owner])
         .rpc();
 
-    const inboxAccount = await program.account.inbox.fetch(inbox);
-    expect(inboxAccount.admin).to.equal(newOwner.publicKey);
+    await provider.connection.confirmTransaction(sig);
+
+    let inboxAccount = await program.account.inbox.fetch(inbox);
+    expect(inboxAccount.admin.toString()).to.equal(newOwner.publicKey.toString());
   });
 
   // it("Sends a message from a non-whitelisted address", async () => {

@@ -9,14 +9,14 @@ pub mod sol_anon {
     pub fn initialize(ctx: Context<InitializeInbox>) -> Result<()> {
         let inbox = &mut ctx.accounts.inbox;
         inbox.admin = *ctx.accounts.admin.key;
-        // msg!("Inbox initialized with admin: {:?}", inbox.admin);
+        msg!("Inbox initialized with admin: {:?}", inbox.admin);
         Ok(())
     }
 
     pub fn change_admin(ctx: Context<ChangeAdmin>, new_admin: Pubkey) -> Result<()> {
         let inbox = &mut ctx.accounts.inbox;
-        inbox.admin = new_admin;
-        // msg!("Inbox admin changed to: {:?}", inbox.admin);
+        inbox.admin = new_admin.key().clone();
+        msg!("Inbox admin changed to: {:?}", inbox.admin);
         Ok(())
     }
 }
@@ -38,7 +38,7 @@ pub struct InitializeInbox<'info> {
 
 #[derive(Accounts)]
 pub struct ChangeAdmin<'info> {
-    #[account(seeds=[b"inbox"], bump, has_one = admin)]
+    #[account(mut, seeds=[b"inbox"], bump, has_one = admin)]
     pub inbox: Account<'info, Inbox>,
     pub admin: Signer<'info>,
 }
