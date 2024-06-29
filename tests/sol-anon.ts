@@ -28,7 +28,6 @@ describe("sol-anon", () => {
           .rpc();
 
         let inboxAccount = await program.account.inbox.fetch(inbox);
-        console.log("INBOX INIT", inboxAccount.admin.toString());
         expect(inboxAccount.admin.toString() === owner.publicKey.toString());
   });
 
@@ -38,14 +37,9 @@ describe("sol-anon", () => {
     let sig = await program
         .methods
         .changeAdmin(newOwner.publicKey)
-        .accounts({
-            inbox: inbox,
-            admin: owner.publicKey
-        })
+        .accountsPartial({admin: owner.publicKey})
         .signers([owner])
         .rpc();
-
-    await provider.connection.confirmTransaction(sig);
 
     let inboxAccount = await program.account.inbox.fetch(inbox);
     expect(inboxAccount.admin.toString()).to.equal(newOwner.publicKey.toString());
