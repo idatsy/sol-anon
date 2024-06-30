@@ -15,6 +15,8 @@ describe("sol-anon", () => {
   const newOwner = anchor.web3.Keypair.generate();
   // whitelisted user
   const whitelistedSender = anchor.web3.Keypair.generate();
+  // regular user
+  const nonWhitelistedSender = anchor.web3.Keypair.generate();
 
   const [inbox] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("inbox")], program.programId
@@ -81,7 +83,6 @@ describe("sol-anon", () => {
   });
 
   it("Non whitelisted user can send a regular message", async () => {
-    const nonWhitelistedSender = anchor.web3.Keypair.generate();
     let token_airdrop = await provider.connection.requestAirdrop(nonWhitelistedSender.publicKey, 1000000000);
     await provider.connection.confirmTransaction(token_airdrop);
 
@@ -112,7 +113,10 @@ describe("sol-anon", () => {
   });
 
   it("Whitelisted user can send a message without paying for the slot and inbox refunded rent difference", async () => {
-    // Get the initial balance of the inbox so we can check if it received a refund
+    let token_airdrop = await provider.connection.requestAirdrop(whitelistedSender.publicKey, 1000000000);
+    await provider.connection.confirmTransaction(token_airdrop);
+
+    // Get the initial balance of the inbox so that we can check if it received a refund
     const initialInboxBalance = await program.provider.connection.getBalance(inbox);
 
     // now that a slot has been paid for by the non-whitelisted user, the whitelisted user can send a message without paying
@@ -147,14 +151,49 @@ describe("sol-anon", () => {
     expect(finalInboxBalance).to.be.greaterThan(initialInboxBalance);
   });
 
-  it("Whitelisted user can send a message and pay for the slot", async () => {});
+  it("Whitelisted sending fails if no slots are available", async () => {
+    try {
+      await program
+          .methods
+          .sendWhitelistedMessage("This should fail!", newOwner.publicKey)
+          .accountsPartial({inbox: inbox, sender: whitelistedSender.publicKey})
+          .signers([whitelistedSender])
+          .rpc();
+
+      expect.fail("Expected transaction to fail, but it succeeded");
+    } catch (error) {
+        expect(error, "Transaction should have failed");
+    }
+  });
+
+  it("Whitelisted user can send a message and pay for the slot realloc", async () => {
+    // send a non-whitelisted message to create a slot
+    await program
+        .methods
+        .sendRegularMessage("Short message here", owner.publicKey)
+        .accountsPartial({inbox: inbox, sender: nonWhitelistedSender.publicKey})
+        .signers([nonWhitelistedSender])
+        .rpc();
+
+    // now that a slot has been paid for by the non-whitelisted user, the whitelisted user can send a message paying only for the difference
+    await program
+        .methods
+        .sendWhitelistedMessage("This is a much much longer message that will require more space", owner.publicKey)
+        .accountsPartial({inbox: inbox, sender: whitelistedSender.publicKey})
+        .signers([whitelistedSender])
+        .rpc();
+
+    // check that messages have been incremented
+    let inboxAccount = await program.account.inbox.fetch(inbox);
+    expect(inboxAccount.latestWhitelistedSlot.toString()).to.equal("2");
+  });
 
   it("Removes a user from the whitelist", async () => {
     const [excpected_pda] = anchor.web3.PublicKey.findProgramAddressSync([whitelistedSender.publicKey.toBuffer()], program.programId);
     const account_info = await provider.connection.getAccountInfo(excpected_pda);
     expect(account_info).to.not.be.null;
 
-    let sig = await program
+    await program
         .methods
         .removeFromWhitelist(whitelistedSender.publicKey)
         .accountsPartial({admin: newOwner.publicKey})

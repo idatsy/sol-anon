@@ -61,12 +61,22 @@ pub mod sol_anon {
         let rent = Rent::get()?;
         let new_rent = rent.minimum_balance(required_space);
         let old_rent = rent.minimum_balance(current_space);
+        msg!("Transferring rent: {:?} {:?}", new_rent, old_rent);
+        msg!("Payer balance {:?}", ctx.accounts.sender.to_account_info().lamports());
 
         if new_rent > old_rent {
             // transfer from the signer to the slot
-            let diff = new_rent - old_rent;
-            **ctx.accounts.sender.to_account_info().try_borrow_mut_lamports()? -= diff;
-            **slot.try_borrow_mut_lamports()? += diff;
+            let diff = new_rent.saturating_sub(old_rent);
+            let transfer_instruction = solana_program::system_instruction::transfer(&ctx.accounts.sender.key(), &slot.key(), diff);
+            anchor_lang::solana_program::program::invoke_signed(
+                &transfer_instruction,
+                &[
+                    ctx.accounts.sender.to_account_info(),
+                    slot.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
+                    ],
+                &[],
+            )?;
         } else if new_rent < old_rent {
             let diff = old_rent - new_rent;
             **slot.try_borrow_mut_lamports()? -= diff;
@@ -124,6 +134,7 @@ pub struct SendWhitelistedMessage<'info> {
     pub slot: Account<'info, Slot>,
     #[account(seeds=[sender.key().as_ref()], bump)]
     pub whitelist: Account<'info, Whitelist>,
+    #[account(mut)]
     pub sender: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
