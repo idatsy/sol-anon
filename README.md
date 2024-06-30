@@ -1,4 +1,6 @@
 # Sol-Anon: Secure On-Chain Messaging for Solana
+[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://idatsy.github.io/sol-anon/)
+
 > The latest documentation for this project is available at [https://idatsy.github.io/sol-anon/](https://idatsy.github.io/sol-anon/)
 
 Sol-Anon is an on-chain inbox program built on Solana. It leverages the spam commonly occuring on the network by providing a whitelist mechanism for trusted senders. 
