@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["add_to_whitelist","remove_from_whitelist"],"struct":["AddToWhitelist","AddToWhitelistBumps","RemoveFromWhitelist","RemoveFromWhitelistBumps"]};

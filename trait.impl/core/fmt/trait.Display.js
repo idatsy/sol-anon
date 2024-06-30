@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"sol_anon":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.79.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"enum\" href=\"sol_anon/errors/enum.SolAnonError.html\" title=\"enum sol_anon::errors::SolAnonError\">SolAnonError</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

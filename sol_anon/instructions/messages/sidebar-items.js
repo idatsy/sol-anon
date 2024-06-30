@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["reclaim_slot","send_regular_message","send_whitelisted_message"],"struct":["ReclaimSlot","ReclaimSlotBumps","SendRegularMessage","SendRegularMessageBumps","SendWhitelistedMessage","SendWhitelistedMessageBumps"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["add_to_whitelist","change_admin","initialize","reclaim_slot","remove_from_whitelist","send_regular_message","send_whitelisted_message","withdraw_surplus_inbox_balance"]};

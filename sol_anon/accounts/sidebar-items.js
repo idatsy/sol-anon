@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["AddToWhitelist","ChangeAdmin","InitializeInbox","ReclaimSlot","RemoveFromWhitelist","SendRegularMessage","SendWhitelistedMessage","WithdrawSurplusInboxBalance"]};
