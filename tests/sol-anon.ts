@@ -69,7 +69,22 @@ describe("sol-anon", () => {
     expect.fail("TODO");
   });
 
+  it("Removes a user from the whitelist", async () => {
+    const [excpected_pda] = anchor.web3.PublicKey.findProgramAddressSync([whitelistedSender.publicKey.toBuffer()], program.programId);
+    const account_info = await provider.connection.getAccountInfo(excpected_pda);
+    expect(account_info).to.not.be.null;
 
+    let sig = await program
+        .methods
+        .removeFromWhitelist(whitelistedSender.publicKey)
+        .accountsPartial({admin: newOwner.publicKey})
+        .signers([newOwner])
+        .rpc();
+
+    const account_info_after = await provider.connection.getAccountInfo(excpected_pda);
+    expect(account_info_after).to.be.null;
+  });
+  
   // it("Sends a message from a non-whitelisted address", async () => {
   //   const message = "Hello, Solana!";
   //

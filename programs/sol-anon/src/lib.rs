@@ -28,6 +28,11 @@ pub mod sol_anon {
         msg!("Adding address to whitelist: {:?}", address_to_whitelist);
         Ok(())
     }
+
+    pub fn remove_from_whitelist(_ctx: Context<RemoveFromWhitelist>, address_to_remove: Pubkey) -> Result<()> {
+        msg!("Removing address from whitelist: {:?}", address_to_remove);
+        Ok(())
+    }
 }
 
 #[account]
@@ -67,4 +72,13 @@ pub struct AddToWhitelist<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(address_to_remove: Pubkey)]
+pub struct RemoveFromWhitelist<'info> {
+    #[account(mut, seeds=[address_to_remove.key().as_ref()], bump, close = admin)]
+    pub whitelist_pda: Account<'info, Whitelist>,
+    #[account(mut)]
+    pub admin: Signer<'info>,
 }
