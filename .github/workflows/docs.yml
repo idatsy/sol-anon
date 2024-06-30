@@ -1,0 +1,33 @@
+name: Deploy Rust Docs to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Build Documentation
+      run: cargo doc --no-deps --workspace
+
+    - name: Add index.html
+      run: echo "<meta http-equiv=\"refresh\" content=\"0; url=sol_anon\">" > target/doc/index.html
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./target/doc
+        force_orphan: true
