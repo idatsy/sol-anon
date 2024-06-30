@@ -65,16 +65,31 @@ pub mod sol_anon {
         if new_rent > old_rent {
             // transfer from the signer to the slot
             let diff = new_rent.saturating_sub(old_rent);
-            let transfer_instruction = solana_program::system_instruction::transfer(&ctx.accounts.sender.key(), &slot.key(), diff);
-            anchor_lang::solana_program::program::invoke_signed(
-                &transfer_instruction,
-                &[
-                    ctx.accounts.sender.to_account_info(),
-                    slot.to_account_info(),
-                    ctx.accounts.system_program.to_account_info(),
+            msg!("Transferring {:?} lamports to slot", diff);
+            // try to take this from the inbox buffer first
+            let inbox_rent = rent.minimum_balance(inbox.to_account_info().data_len());
+            let inbox_surplus = inbox.to_account_info().lamports().saturating_sub(inbox_rent);
+
+            let remaining_diff = diff.saturating_sub(inbox_surplus);
+            msg!("Remaining diff: {:?}", remaining_diff);
+            if remaining_diff > 0 {
+                let transfer_instruction = solana_program::system_instruction::transfer(&ctx.accounts.sender.key(), &slot.key(), remaining_diff);
+                msg!("Transferring {:?} lamports to slot", remaining_diff);
+                solana_program::program::invoke_signed(
+                    &transfer_instruction,
+                    &[
+                        ctx.accounts.sender.to_account_info(),
+                        slot.to_account_info(),
+                        ctx.accounts.system_program.to_account_info(),
                     ],
-                &[],
-            )?;
+                    &[],
+                )?;
+            }
+            // DEV: We have to put PDA transfers after native transfers for *reasons*. See: https://solana.stackexchange.com/questions/4519/anchor-error-error-processing-instruction-0-sum-of-account-balances-before-and
+            if inbox_surplus > 0 {
+                **inbox.to_account_info().try_borrow_mut_lamports()? -= inbox_surplus;
+                **slot.try_borrow_mut_lamports()? += inbox_surplus;
+            }
         } else if new_rent < old_rent {
             let diff = old_rent - new_rent;
             **slot.try_borrow_mut_lamports()? -= diff;

@@ -176,7 +176,7 @@ describe("sol-anon", () => {
         .rpc();
 
     // now that a slot has been paid for by the non-whitelisted user, the whitelisted user can send a message paying only for the difference
-    await program
+    let sig = await program
         .methods
         .sendWhitelistedMessage("This is a much much longer message that will require more space", owner.publicKey)
         .accountsPartial({inbox: inbox, sender: whitelistedSender.publicKey})
@@ -225,6 +225,9 @@ describe("sol-anon", () => {
   });
 
   it("Admin can withdraw inbox balance without destroying the inbox", async () => {
+    // transfer the inbox some sol just in case
+    let token_airdrop = await provider.connection.requestAirdrop(inbox, 1000000000);
+    await provider.connection.confirmTransaction(token_airdrop);
     const initialInboxBalance = await program.provider.connection.getBalance(inbox);
 
     await program
