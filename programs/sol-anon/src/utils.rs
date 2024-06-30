@@ -1,8 +1,30 @@
+//! # Utils
+//!
+//! This module contains utility functions used across the Sol-Anon program.
+
 use anchor_lang::prelude::*;
 use crate::state::Inbox;
 use crate::constants::SLOT_BASE_SPACE;
 
-/// Reallocates the slot account if necessary and handles the transfer of lamports
+/// Reallocates the slot account if necessary and handles the transfer of lamports.
+///
+/// This function is responsible for:
+/// 1. Calculating the required space for the slot based on the message length.
+/// 2. Reallocating the slot account if more space is needed.
+/// 3. Handling the transfer of lamports to cover rent for the new allocation.
+/// 4. Managing any refunds if the new allocation requires less space.
+///
+/// # Arguments
+///
+/// * `slot` - A reference to the slot account info.
+/// * `message` - A reference to the message string.
+/// * `inbox` - A mutable reference to the Inbox account.
+/// * `sender` - A reference to the sender's account info.
+/// * `system_program` - A reference to the system program's account info.
+///
+/// # Returns
+///
+/// Returns `Ok(())` if the reallocation and transfers are successful, or an error if any operation fails.
 pub fn realloc_slot<'a>(
     slot: &AccountInfo<'a>,
     message: &str,

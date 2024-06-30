@@ -1,7 +1,12 @@
+//! # Inbox Instructions
+//!
+//! This module contains instructions related to managing the inbox.
+
 use anchor_lang::prelude::*;
 use crate::state::*;
 use crate::constants::*;
 
+/// Initializes a new inbox.
 pub fn initialize(ctx: Context<InitializeInbox>) -> Result<()> {
     let inbox = &mut ctx.accounts.inbox;
     inbox.admin = *ctx.accounts.admin.key;
@@ -14,6 +19,7 @@ pub fn initialize(ctx: Context<InitializeInbox>) -> Result<()> {
     Ok(())
 }
 
+/// Changes the admin of the inbox.
 pub fn change_admin(ctx: Context<ChangeAdmin>, new_admin: Pubkey) -> Result<()> {
     let inbox = &mut ctx.accounts.inbox;
     inbox.admin = new_admin;
@@ -23,6 +29,7 @@ pub fn change_admin(ctx: Context<ChangeAdmin>, new_admin: Pubkey) -> Result<()> 
     Ok(())
 }
 
+/// Withdraws surplus balance from the inbox.
 pub fn withdraw_surplus_inbox_balance(ctx: Context<WithdrawSurplusInboxBalance>) -> Result<()> {
     let inbox = &ctx.accounts.inbox;
     let admin = &ctx.accounts.admin;
@@ -38,6 +45,7 @@ pub fn withdraw_surplus_inbox_balance(ctx: Context<WithdrawSurplusInboxBalance>)
     Ok(())
 }
 
+/// Accounts required for initializing an inbox.
 #[derive(Accounts)]
 pub struct InitializeInbox<'info> {
     #[account(
@@ -53,6 +61,7 @@ pub struct InitializeInbox<'info> {
     pub system_program: Program<'info, System>,
 }
 
+/// Accounts required for changing the admin of an inbox.
 #[derive(Accounts)]
 pub struct ChangeAdmin<'info> {
     #[account(mut, seeds=[INBOX_SEED], bump, has_one = admin)]
@@ -60,6 +69,7 @@ pub struct ChangeAdmin<'info> {
     pub admin: Signer<'info>,
 }
 
+/// Accounts required for withdrawing surplus balance from an inbox.
 #[derive(Accounts)]
 pub struct WithdrawSurplusInboxBalance<'info> {
     #[account(mut, has_one = admin)]

@@ -1,8 +1,13 @@
+//! # Message Instructions
+//!
+//! This module contains instructions related to sending and managing messages.
+
 use anchor_lang::prelude::*;
 use crate::state::*;
 use crate::constants::*;
 use crate::utils::realloc_slot;
 
+/// Sends a regular message.
 pub fn send_regular_message(ctx: Context<SendRegularMessage>, message: String, to: Pubkey) -> Result<()> {
     let slot = &mut ctx.accounts.slot;
     slot.to = to;
@@ -15,6 +20,7 @@ pub fn send_regular_message(ctx: Context<SendRegularMessage>, message: String, t
     Ok(())
 }
 
+/// Sends a whitelisted message.
 pub fn send_whitelisted_message(ctx: Context<SendWhitelistedMessage>, message: String, to: Pubkey) -> Result<()> {
     let inbox = &mut ctx.accounts.inbox;
 
@@ -37,11 +43,13 @@ pub fn send_whitelisted_message(ctx: Context<SendWhitelistedMessage>, message: S
     Ok(())
 }
 
+/// Reclaims a slot.
 pub fn reclaim_slot(ctx: Context<ReclaimSlot>) -> Result<()> {
     msg!("Slot reclaimed: {:?}", ctx.accounts.slot.key());
     Ok(())
 }
 
+/// Accounts required for sending a regular message.
 #[derive(Accounts)]
 #[instruction(message: String)]
 pub struct SendRegularMessage<'info> {
@@ -60,6 +68,7 @@ pub struct SendRegularMessage<'info> {
     pub system_program: Program<'info, System>,
 }
 
+/// Accounts required for sending a whitelisted message.
 #[derive(Accounts)]
 pub struct SendWhitelistedMessage<'info> {
     #[account(mut)]
@@ -87,6 +96,7 @@ pub struct SendWhitelistedMessage<'info> {
     pub system_program: Program<'info, System>,
 }
 
+/// Accounts required for reclaiming a slot.
 #[derive(Accounts)]
 pub struct ReclaimSlot<'info> {
     #[account(mut, has_one = admin)]

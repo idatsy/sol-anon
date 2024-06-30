@@ -1,17 +1,24 @@
+//! # Whitelist Instructions
+//!
+//! This module contains instructions related to managing the whitelist.
+
 use anchor_lang::prelude::*;
 use crate::state::*;
 use crate::constants::*;
 
+/// Adds an address to the whitelist.
 pub fn add_to_whitelist(_ctx: Context<AddToWhitelist>, address_to_whitelist: Pubkey) -> Result<()> {
     msg!("Adding address to whitelist: {:?}", address_to_whitelist);
     Ok(())
 }
 
+/// Removes an address from the whitelist.
 pub fn remove_from_whitelist(_ctx: Context<RemoveFromWhitelist>, address_to_remove: Pubkey) -> Result<()> {
     msg!("Removing address from whitelist: {:?}", address_to_remove);
     Ok(())
 }
 
+/// Accounts required for adding an address to the whitelist.
 #[derive(Accounts)]
 #[instruction(address_to_whitelist: Pubkey)]
 pub struct AddToWhitelist<'info> {
@@ -32,6 +39,7 @@ pub struct AddToWhitelist<'info> {
     pub system_program: Program<'info, System>,
 }
 
+/// Accounts required for removing an address from the whitelist.
 #[derive(Accounts)]
 #[instruction(address_to_remove: Pubkey)]
 pub struct RemoveFromWhitelist<'info> {
