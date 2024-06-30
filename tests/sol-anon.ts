@@ -9,14 +9,18 @@ describe("sol-anon", () => {
 
   const program = anchor.workspace.SolAnon as Program<SolAnon>;
 
+  // inital owner
   const owner = anchor.web3.Keypair.generate();
+  // new owner after testing ownership change
+  const newOwner = anchor.web3.Keypair.generate();
+  // whitelisted user
+  const whitelistedSender = anchor.web3.Keypair.generate();
 
   const [inbox] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from("inbox")], program.programId
   );
 
   it("Initializes an inbox", async () => {
-
       let token_airdrop = await provider.connection.requestAirdrop(owner.publicKey, 1000000000);
       await provider.connection.confirmTransaction(token_airdrop);
 
@@ -32,7 +36,6 @@ describe("sol-anon", () => {
   });
 
   it("Changes owner", async () => {
-    const newOwner = anchor.web3.Keypair.generate();
 
     let sig = await program
         .methods
@@ -44,6 +47,28 @@ describe("sol-anon", () => {
     let inboxAccount = await program.account.inbox.fetch(inbox);
     expect(inboxAccount.admin.toString()).to.equal(newOwner.publicKey.toString());
   });
+
+  it("Adds a user to whitelist", async () => {
+    let token_airdrop = await provider.connection.requestAirdrop(newOwner.publicKey, 1000000000);
+    await provider.connection.confirmTransaction(token_airdrop);
+
+    let sig = await program
+        .methods
+        .addToWhitelist(whitelistedSender.publicKey)
+        .accountsPartial({admin: newOwner.publicKey})
+        .signers([newOwner])
+        .rpc();
+
+    const [excpected_pda] = anchor.web3.PublicKey.findProgramAddressSync([whitelistedSender.publicKey.toBuffer()], program.programId);
+    const account_info = await provider.connection.getAccountInfo(excpected_pda);
+    expect(account_info).to.not.be.null;
+  });
+
+  it("Verifies that a user is whitelisted", async () => {
+    // Raise an exception indicating TODO implementation once we have a slot caller for whitelisters to check against
+    expect.fail("TODO");
+  });
+
 
   // it("Sends a message from a non-whitelisted address", async () => {
   //   const message = "Hello, Solana!";
