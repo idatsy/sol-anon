@@ -203,4 +203,38 @@ describe("sol-anon", () => {
     const account_info_after = await provider.connection.getAccountInfo(excpected_pda);
     expect(account_info_after).to.be.null;
   });
+
+  it("Admin can reclaim slots", async () => {
+    const latestFreeSlotBuffer = Buffer.alloc(8);
+    latestFreeSlotBuffer.writeBigUInt64LE(BigInt(0));
+    const [slotPda] = anchor.web3.PublicKey.findProgramAddressSync(
+        [latestFreeSlotBuffer],
+        program.programId
+    );
+
+    await program
+        .methods
+        .reclaimSlot()
+        .accounts({inbox: inbox, slot: slotPda, admin: newOwner.publicKey})
+        .signers([newOwner])
+        .rpc();
+
+    const [excpected_pda] = anchor.web3.PublicKey.findProgramAddressSync([whitelistedSender.publicKey.toBuffer()], program.programId);
+    const account_info = await provider.connection.getAccountInfo(excpected_pda);
+    expect(account_info).to.be.null;
+  });
+
+  it("Admin can withdraw inbox balance without destroying the inbox", async () => {
+    const initialInboxBalance = await program.provider.connection.getBalance(inbox);
+
+    await program
+        .methods
+        .withdrawSurplusInboxBalance()
+        .accounts({inbox: inbox, admin: newOwner.publicKey})
+        .signers([newOwner])
+        .rpc();
+
+    const finalInboxBalance = await program.provider.connection.getBalance(inbox);
+    expect(finalInboxBalance).to.be.lessThan(initialInboxBalance);
+  });
 });

@@ -61,8 +61,6 @@ pub mod sol_anon {
         let rent = Rent::get()?;
         let new_rent = rent.minimum_balance(required_space);
         let old_rent = rent.minimum_balance(current_space);
-        msg!("Transferring rent: {:?} {:?}", new_rent, old_rent);
-        msg!("Payer balance {:?}", ctx.accounts.sender.to_account_info().lamports());
 
         if new_rent > old_rent {
             // transfer from the signer to the slot
@@ -90,6 +88,25 @@ pub mod sol_anon {
         inbox.latest_whitelisted_slot += 1;
 
         msg!("Whitelisted message {:?} sent to: {:?}. New whitelisted slot: {:?}", slot.message, slot.to, inbox.latest_whitelisted_slot);
+        Ok(())
+    }
+
+    pub fn reclaim_slot(ctx: Context<ReclaimSlot>) -> Result<()> {
+        msg!("Slot reclaimed: {:?}", ctx.accounts.slot.key());
+        Ok(())
+    }
+
+    pub fn withdraw_surplus_inbox_balance(ctx: Context<WithdrawSurplusInboxBalance>) -> Result<()> {
+        let inbox = &mut ctx.accounts.inbox;
+
+        let rent = Rent::get()?;
+        let rent = rent.minimum_balance(inbox.to_account_info().data_len());
+        let surplus = inbox.to_account_info().lamports() - rent;
+
+        **inbox.to_account_info().try_borrow_mut_lamports()? -= surplus;
+        **ctx.accounts.admin.to_account_info().try_borrow_mut_lamports()? += surplus;
+
+        msg!("Surplus of {:?} lamports withdrawn from inbox", surplus);
         Ok(())
     }
 }
@@ -137,6 +154,24 @@ pub struct SendWhitelistedMessage<'info> {
     #[account(mut)]
     pub sender: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct ReclaimSlot<'info> {
+    #[account(mut, has_one = admin)]
+    pub inbox: Account<'info, Inbox>,
+    #[account(mut, close = admin)]
+    pub slot: Account<'info, Slot>,
+    #[account(mut)]
+    pub admin: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct WithdrawSurplusInboxBalance<'info> {
+    #[account(mut, has_one = admin)]
+    pub inbox: Account<'info, Inbox>,
+    #[account(mut)]
+    pub admin: Signer<'info>,
 }
 
 #[account]
